@@ -1,0 +1,114 @@
+<mat-toolbar color="primary" class="toolbar">
+    <span class="toolbar__title clickable" (click)="goHome()">
+        Просмотр документа
+    </span>
+
+    <div class="toolbar__btns">
+        <button mat-icon-button (click)="zoomOut()">
+            <mat-icon>remove</mat-icon>
+        </button>
+
+        <span class="toolbar__zoom">
+            {{ zoom | number: '1.1-1' }}x
+        </span>
+
+        <button mat-icon-button (click)="zoomIn()">
+            <mat-icon>add</mat-icon>
+        </button>
+
+        <button mat-raised-button color="accent" (click)="onSave()">
+            <mat-icon>save</mat-icon>
+            <span>Сохранить</span>
+        </button>
+    </div>
+</mat-toolbar>
+
+<div class="page">
+    <div class="page__content">
+        <ng-container *ngIf="document$ | async as document; else loadingOrError">
+            <div class="document-container">
+                <h1 class="document-title">{{ document.name }}</h1>
+
+                <div
+                class="pages-wrapper"
+                [style.width.px]="baseWidth * zoom"
+                >
+                    <div class="pages">
+                        <mat-card
+                        class="page-card"
+                        *ngFor="let page of document.pages"
+                        >
+                            <div
+                                class="page-card__container"
+                                #pageContainer
+                                (click)="onPageClick($event, page.number)"
+                            >
+                                <mat-card-header>
+                                    <mat-card-title>
+                                        Страница {{ page.number }}
+                                    </mat-card-title>
+                                </mat-card-header>
+
+                                <mat-card-content>
+                                    <img
+                                        class="page-image"
+                                        [src]="page.imageUrl"
+                                        [alt]="'Page ' + page.number"
+                                    />
+                                    <div class="annotations-layer">
+                                        <div
+                                        class="annotation"
+                                        *ngFor="let ann of annotationsByPage(page.number)"
+                                        [style.left.%]="ann.xPercent"
+                                        [style.top.%]="ann.yPercent"
+                                        (mousedown)="onAnnotationMouseDown($event, ann)"
+                                        [class.annotation--hidden]="draggingAnnotation?.id === ann.id"
+                                        >
+                                            <button
+                                                mat-icon-button
+                                                class="annotation__delete"
+                                                (click)="deleteAnnotation(ann.id); $event.stopPropagation()"
+                                            >
+                                                <mat-icon>close</mat-icon>
+                                            </button>
+
+                                            <div class="annotation__text">
+                                                {{ ann.text }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </mat-card-content>
+                            </div>
+                        </mat-card>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="annotations-drag-overlay"
+                *ngIf="draggingAnnotation"
+            >
+                <div
+                class="annotation annotation--dragging"
+                [style.left.px]="dragClientX"
+                [style.top.px]="dragClientY"
+                >
+                    <div class="annotation__text">
+                        {{ draggingAnnotation.text }}
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+
+    <ng-template #loadingOrError>
+        <div *ngIf="hasError; else loading" class="maintenance">
+            <p>Здесь ещё пока ведутся ремонтные работы, загляните чуть попозже.</p>
+            <button mat-raised-button color="primary" (click)="goBack()">Назад</button>
+        </div>
+
+        <ng-template #loading>
+            <p>Загрузка документа...</p>
+        </ng-template>
+    </ng-template>
+</div>

@@ -1,27 +1,40 @@
-# DocAnnotator
+# Оценка реализации
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+## Плюсы реализации
 
-## Development server
+1. **Разделение ответственности**
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+   * Логика загрузки документа и логика работы с аннотациями вынесены в отдельные сервисы.
+   * Компонент отвечает только за отображение и пользовательское взаимодействие.
 
-## Code scaffolding
+2. **Реализация перемещения аннотаций без сторонних библиотек**
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+   * Drag & Drop реализован вручную через `mousedown`, `document:mousemove` и `document:mouseup`.
+   * Координаты аннотаций сохраняются в процентах, что обеспечивает корректную работу при изменении zoom.
 
-## Build
+3. **Корректная работа с маршрутом и потоками**
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+   * Документ загружается по `id` из URL.
+   * Используются `switchMap`, `catchError` и `AsyncPipe`.
+   * Обработано состояние ошибки загрузки документа.
 
-## Running unit tests
+---
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Минусы реализации
 
-## Running end-to-end tests
+1. **Аннотации не привязаны к конкретному документу**
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+   * `AnnotationService` хранит аннотации глобально.
+   * При смене `id` документа аннотации не разделяются и не очищаются.
 
-## Further help
+2. **Вызов метода из шаблона**
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+   * Метод `annotationsByPage(pageNumber)` используется в `*ngFor`.
+   * При большом количестве страниц возможны лишние вызовы при change detection.
+
+3. **Зависимость логики от порядка DOM**
+
+   * В `getPageContainerAtPoint` номер страницы определяется через `index + 1`.
+   * При изменении порядка страниц возможен рассинхрон между данными и DOM.
+
+---
